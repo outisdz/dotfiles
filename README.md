@@ -16,6 +16,7 @@
 
 ![Desktop](screenshots/desktop.png)
 ![Desktop](screenshots/desktop1.png)
+![Desktop](screenshots/desktop4.png)
 ![Desktop](screenshots/desktop2.png)
 ![Desktop](screenshots/desktop3.png)
 ![Launcher](screenshots/launcher.png)
