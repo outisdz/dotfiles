@@ -1,0 +1,401 @@
+* {
+    border: none;
+    border-radius: 0px;
+    font-family: "JetBrainsMono Nerd Font";
+    font-weight: bold;
+    font-size: 10px;
+    min-height: 10px;
+}
+
+
+@define-color bar-bg rgba(0, 0, 0, 0);
+
+@define-color main-bg #11111b;
+@define-color main-fg #cdd6f4;
+
+@define-color wb-act-bg #a6adc8;
+@define-color wb-act-fg #313244;
+
+@define-color wb-hvr-bg #f5c2e7;
+@define-color wb-hvr-fg #313244;
+
+tooltip {
+    background: rgba(0, 0, 0, 1);
+    color: @main-fg;
+    border-radius: 7px;
+    border-width: 0px;
+}
+
+menu {
+    border-radius: 15px;
+    background: #161320;
+    color: #B5E8E0;
+}
+menuitem {
+    border-radius: 15px;
+}
+
+window#waybar {
+    background: @bar-bg;
+}
+
+/* ---------------- WORKSPACES ---------------- */
+
+#workspaces {
+padding: 4px 2px;
+background: @main-bg;
+padding-left: 6px;
+padding-right: 6px;
+
+margin-left: 4px;
+margin-right: 4px;
+
+border-radius: 12px;
+}
+
+#workspaces button {
+background: @main-bg;
+color: @main-fg;
+
+padding: 0 2px;
+margin: 0 2px;
+
+border-radius: 10px;
+
+transition: all 0.25s ease;
+}
+
+#workspaces button:hover {
+background: @wb-hvr-bg;
+color: @wb-hvr-fg;
+}
+
+#workspaces button.active {
+background: @wb-act-bg;
+color: @wb-act-fg;
+
+padding-left: 8px;
+padding-right: 8px;
+
+box-shadow: inset 0 -2px alpha(@wb-act-fg, 0.15);
+}
+
+/* ---------------- WINDOW TITLE ---------------- */
+
+#window {
+background: @main-bg;
+color: @main-fg;
+
+padding-left: 12px;
+padding-right: 12px;
+
+margin-left: 6px;
+margin-right: 6px;
+
+border-radius: 12px;
+}
+
+/* ---------------- CUSTOM CORNERS ---------------- */
+
+#custom-rightcorner {
+background: @main-bg;
+border-radius: 0px 32px 32px 0px;
+
+margin-right: 5px;
+padding-right: 5px;
+}
+
+#custom-leftcorner {
+background: @main-bg;
+border-radius: 32px 0px 0px 32px;
+margin-left: 5px;
+padding-left: 5px;
+}
+
+#custom-midcorner {
+background: @main-bg;
+}
+
+#custom-pacman {
+background: @main-bg;
+color: @main-fg;
+}
+
+/* ---------------- MODULES ---------------- */
+
+#custom-cliphist {
+background: @main-bg;
+color: @main-fg;
+padding-left: 3px;
+padding-right: 3px;
+}
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#wireplumber,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#scratchpad,
+#power-profiles-daemon,
+#mpd {
+padding: 0 10px;
+color: @main-fg;
+background: @main-bg;
+}
+
+
+
+/* ---------------- POWER ---------------- */
+
+#custom-power {
+background: @main-bg;
+color: @main-fg;
+}
+
+/* ---------------- CLOCK ---------------- */
+
+#clock {
+background: @main-bg;
+color: @main-fg;
+padding: 0px;
+}
+
+/* ---------------- BATTERY ---------------- */
+
+#battery {
+color: @main-fg;
+}
+
+#battery.charging,
+#battery.plugged {
+color: @main-fg;
+}
+
+@keyframes blink {
+    to {
+        background: @main-bg;
+        color: @main-fg;
+    }
+}
+
+#battery.critical:not(.charging) {
+background: @main-bg;
+color: @main-fg;
+
+animation-name: blink;
+animation-duration: 0.5s;
+animation-timing-function: steps(12);
+animation-iteration-count: infinite;
+animation-direction: alternate;
+}
+
+/* ---------------- POWER PROFILE ---------------- */
+
+#power-profiles-daemon.performance,
+#power-profiles-daemon.balanced,
+#power-profiles-daemon.power-saver {
+background: @main-bg;
+color: @main-fg;
+}
+
+/* ---------------- CPU / MEMORY / DISK ---------------- */
+
+#disk,
+#backlight {
+background: @main-bg;
+}
+#cpu {
+padding-left: 3px;
+padding-right: 3px;
+}
+#memory {
+padding-left: 3px;
+padding-right: 3px;
+}
+/* ---------------- NETWORK ---------------- */
+
+#network {
+background: @main-bg;
+padding-left: 3px;
+padding-right: 3px;
+}
+
+#network.disconnected {
+background: @main-bg;
+padding-left: 3px;
+padding-right: 3px;
+}
+
+/* ---------------- AUDIO ---------------- */
+
+#pulseaudio {
+background: @main-bg;
+color: @main-fg;
+padding-left: 3px;
+padding-right: 3px;
+}
+
+#pulseaudio:hover {
+background: @main-bg;
+}
+
+#pulseaudio.muted {
+background: @main-bg;
+color: @main-fg;
+}
+
+#wireplumber {
+background: @main-bg;
+color: @main-fg;
+}
+
+#wireplumber.muted {
+background: @main-bg;
+}
+
+/* ---------------- MEDIA ---------------- */
+
+#custom-media {
+background: @main-bg;
+color: @main-fg;
+
+min-width: 100px;
+}
+
+#custom-media.custom-spotify,
+#custom-media.custom-vlc {
+background: @main-bg;
+}
+
+/* ---------------- TEMPERATURE ---------------- */
+
+#temperature {
+padding-left: 3px;
+padding-right: 3px;
+}
+#temperature.critical {
+background: @main-bg;
+margin: 0px;
+padding-left: 3px;
+padding-right: 3px;
+}
+
+/* ---------------- TRAY ---------------- */
+
+#tray {
+background: @main-bg;
+color: @main-fg;
+padding-left: 3px;
+padding-right: 3px;
+}
+
+#tray > .passive {
+-gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+-gtk-icon-effect: highlight;
+background: @main-bg;
+}
+
+#tray menu * {
+min-height: 16px
+}
+
+#tray menu separator {
+min-height: 10px
+}
+
+/* ---------------- IDLE INHIBITOR ---------------- */
+
+#idle_inhibitor {
+background: @main-bg;
+color: @main-fg;
+padding-right: 2px;
+}
+
+#idle_inhibitor.activated {
+background: @main-bg;
+color: @main-fg;
+}
+#idle_inhibitor.inactivated {
+background: @main-bg;
+color: @main-fg;
+}
+
+/* ---------------- MPD ---------------- */
+
+#mpd,
+#mpd.disconnected,
+#mpd.stopped,
+#mpd.paused {
+background: @main-bg;
+color: @main-fg;
+}
+
+/* ---------------- LANGUAGE ---------------- */
+
+#language {
+background: @main-bg;
+color: @main-fg;
+
+padding-left: 3px;
+padding-right: 3px;
+min-width: 16px;
+}
+
+/* ---------------- KEYBOARD STATE ---------------- */
+
+#keyboard-state {
+background: #97e1ad;
+color: @main-fg;
+
+padding: 0 0px;
+margin: 0 5px;
+
+min-width: 16px;
+}
+
+#keyboard-state > label {
+padding: 0 5px;
+}
+
+#keyboard-state > label.locked {
+background: rgba(0, 0, 0, 0.2);
+}
+
+/* ---------------- SCRATCHPAD ---------------- */
+
+#scratchpad {
+background: rgba(0, 0, 0, 0.2);
+}
+
+#scratchpad.empty {
+background: @main-bg;
+}
+
+/* ---------------- PRIVACY ---------------- */
+
+#privacy {
+background: @main-bg;
+padding: 0;
+}
+
+#privacy-item {
+padding: 0 5px;
+color: @main-fg;
+}
+
+#privacy-item.screenshare,
+#privacy-item.audio-in,
+#privacy-item.audio-out {
+background: @main-bg;
+}

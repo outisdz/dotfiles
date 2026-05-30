@@ -1,0 +1,36 @@
+/* Overall background overlay */
+window {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Each button */
+button {
+    background-color: rgba(255, 255, 255, 0.0);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
+    margin: 10px;
+    font-size: 18px;
+
+    /* wlogout ships icons per label name — reference them here */
+    background-repeat: no-repeat;
+    background-position: center 30%;
+    background-size: 64px;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: white;
+}
+
+button:focus {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Per-button icon (wlogout looks these up by label name) */
+#lock     { background-image: image(url("/usr/share/wlogout/icons/lock.png")); }
+#logout   { background-image: image(url("/usr/share/wlogout/icons/logout.png")); }
+#suspend  { background-image: image(url("/usr/share/wlogout/icons/suspend.png")); }
+#hibernate{ background-image: image(url("/usr/share/wlogout/icons/hibernate.png")); }
+#reboot   { background-image: image(url("/usr/share/wlogout/icons/reboot.png")); }
+#shutdown { background-image: image(url("/usr/share/wlogout/icons/shutdown.png")); }

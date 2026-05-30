@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+quotes=(
+  # --- Original quotes rewritten ---
+  "Tyrants don't fear armies — they fear the moment the crowd stops flinching."
+  "Rebellion is not disorder — it's the language of those whose voices were stolen."
+  "Freedom is not a gift they hand you — it's a wound you inflict on their control."
+  "When justice wears the face of the oppressor, defiance becomes the only honest act."
+  "The archives of history are full of rebels, not of those who bowed and smiled."
+  "If comfort is the price of your chains, you've already paid too much."
+  "The crown only stands because the people haven't decided to sit down yet."
+  "Truth won't topple a tyrant — but it sharpens the blade of those who will."
+  "You can't bargain with a system built to bury you."
+  "When they call your cage a homeland, burning it down is the patriotic act."
+  "The machine isn't malfunctioning — destroying you is exactly what it was built to do."
+  "They never freed you — they just lengthened your leash and called it progress."
+  "Every uniform that stands between power and accountability is a monument to cowardice."
+  "Tearing it down isn't violence — it's the first act of honest construction."
+  "Oppression feeds on your desire to keep things civil."
+  "Real change doesn't ask for your old self's permission."
+  "Kindness shown to those who devour the weak is just complicity with better manners."
+  "You become dangerous the moment you stop needing their approval."
+  "What they call peace is just the sound of those who gave up."
+  "The most unbreakable chains are the ones the prisoner helps forge."
+  "Patience can outlast empires — but only if you're building something while you wait."
+  "Not every fire is destruction — some are the only light left."
+  "They gave you the right to speak and built the walls that made sure no one heard."
+  "The most radical act in a broken world is refusing to pretend it isn't."
+  "A man always at war forgets who he was before the first shot — choose your battles or lose yourself."
+  "Authority doesn't corrupt power — it just makes the corruption harder to see."
+  "The quiet ones don't lack fury — they've simply learned where to aim it."
+  "Bending without breaking isn't weakness — it's how rivers carve through stone."
+  "You don't defeat chaos — you become fluent in it."
+  "Every wall you build tells the story of what you're afraid of."
+  "No comfort was ever worth the spine it cost."
+  "Most people were never truly tested — and those in power are counting on that."
+  "Winning every fight means you've been in too many — pick the hill worth dying on."
+  "A still mind will outlast ten loud ones every single time."
+  "Those who've stared into the dark don't fear it — they use it."
+  "A scar is just your body's record of the moment you refused to quit."
+  "Revolt starts not with a weapon but with the decision to stop pretending."
+  "Ruling others is easy — ruling yourself when everything burns is the real test."
+  "Chase it forever and it owns you; stop running and suddenly you hold the ground."
+  "Even the most relentless hunger eventually turns inward if it finds nothing left to consume."
+  # --- Real quotes ---
+  "The most potent weapon in the hands of the oppressor is the mind of the oppressed. — Steve Biko"
+  "If there is no struggle, there is no progress. — Frederick Douglass"
+  "An unjust law is no law at all. — Augustine of Hippo"
+  "The only way to deal with an unfree world is to become so absolutely free that your very existence is an act of rebellion. — Albert Camus"
+  "Those who make peaceful revolution impossible will make violent revolution inevitable. — JFK"
+  "When the whole world is silent, even one voice becomes powerful. — Malala Yousafzai"
+  "You may choose to look the other way, but you can never say again that you did not know. — William Wilberforce"
+  "Disobedience is the true foundation of liberty. — Henry David Thoreau"
+  "I am no longer accepting the things I cannot change — I am changing the things I cannot accept. — Angela Davis"
+  "Oppression can only survive through silence. — Carmen de Monteflores"
+)
+
+ignite() {
+  local len=${#quotes[@]}
+  local idx=$(( RANDOM % len ))
+  echo "${quotes[$idx]}"
+}
+
+ignite

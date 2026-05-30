@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""
+Key derivation & verification tool — Argon2id edition.
+
+Install dependency:
+    pip install argon2-cffi
+
+Usage examples:
+    python3 argon2_tool.py --derive
+    python3 argon2_tool.py --verify --key <base85_key>
+    python3 argon2_tool.py --verify --path derived_key.txt
+    python3 argon2_tool.py --random --length 32
+"""
+
+import argparse
+import base64
+import math
+import secrets
+import string
+import subprocess
+import sys
+from pathlib import Path
+import getpass
+
+try:
+    from argon2.low_level import hash_secret_raw, Type
+except ModuleNotFoundError:
+    sys.exit(
+        "❌ Missing dependency: run  pip install argon2-cffi  then try again."
+    )
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+SYMBOLS          = "!@#$%^&*()-_=+[]{};:,.<>?/|"
+ALL_CHARS        = string.ascii_letters + string.digits + SYMBOLS
+DEFAULT_KEY_FILE = "derived_key.txt"
+MIN_PWD_LEN      = 4
+MIN_MEMORY_KB    = 8 * 1024
+DEFAULT_TIME_COST   = 3
+DEFAULT_MEMORY_KB   = 64 * 1024
+DEFAULT_PARALLELISM = 4
+DEFAULT_KEY_LENGTH  = 64
+
+
+# ── Argument parsing ──────────────────────────────────────────────────────────
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Argon2id key derivation and verification tool",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-v", "--verify", action="store_true",
+                       help="Verify a password against a stored key")
+    group.add_argument("-d", "--derive", action="store_true",
+                       help="Derive a new key from a password and salt")
+    group.add_argument("-g", "--random", action="store_true",
+                       help="Generate a cryptographically random password")
+
+    parser.add_argument("-k", "--key",  type=str,
+                        help="Base85-encoded stored key (used with --verify)")
+    parser.add_argument("-p", "--path", type=str,
+                        help="File containing the Base85-encoded key")
+    parser.add_argument("-l", "--length", type=int, default=DEFAULT_KEY_LENGTH,
+                        help="Key length in bytes (derive) or password length (random)")
+    parser.add_argument("-t", "--time-cost", type=int, default=DEFAULT_TIME_COST,
+                        help="Argon2 time cost (number of passes over memory)")
+    parser.add_argument("-m", "--memory", type=int, default=DEFAULT_MEMORY_KB,
+                        help="Argon2 memory cost in KB (e.g. 65536 = 64 MB)")
+    parser.add_argument("-P", "--parallelism", type=int, default=DEFAULT_PARALLELISM,
+                        help="Argon2 parallelism (number of threads)")
+
+    args = parser.parse_args()
+
+    if args.verify and not (args.key or args.path):
+        parser.error("--verify requires --key or --path")
+    if args.memory < MIN_MEMORY_KB:
+        parser.error(f"--memory must be at least {MIN_MEMORY_KB} KB ({MIN_MEMORY_KB // 1024} MB)")
+    if args.time_cost < 1:
+        parser.error("--time-cost must be at least 1")
+    if args.length < MIN_PWD_LEN:
+        parser.error(f"--length must be at least {MIN_PWD_LEN}")
+
+    return args
+
+
+# ── Argon2id helper ───────────────────────────────────────────────────────────
+def _run_argon2id(
+    password: bytes,
+    salt: bytes,
+    key_length: int,
+    time_cost: int,
+    memory_cost: int,
+    parallelism: int,
+) -> bytes:
+    return hash_secret_raw(
+        secret=password,
+        salt=salt,
+        time_cost=time_cost,
+        memory_cost=memory_cost,
+        parallelism=parallelism,
+        hash_len=key_length,
+        type=Type.ID,
+    )
+
+
+# ── Key derivation ────────────────────────────────────────────────────────────
+def derive_key(key_length: int, time_cost: int, memory_cost: int, parallelism: int) -> str:
+    salt     = getpass.getpass("Enter your salt: ").encode()
+    password = getpass.getpass("Enter your password: ").encode()
+    raw = _run_argon2id(password, salt, key_length, time_cost, memory_cost, parallelism)
+    return base64.b85encode(raw).decode()
+
+
+# ── Key verification ──────────────────────────────────────────────────────────
+def verify_key(
+    stored_key_b85: str,
+    key_length: int,
+    time_cost: int,
+    memory_cost: int,
+    parallelism: int,
+) -> None:
+    salt     = getpass.getpass("Enter your salt: ").encode()
+    password = getpass.getpass("Enter your password: ").encode()
+    candidate = _run_argon2id(password, salt, key_length, time_cost, memory_cost, parallelism)
+
+    if secrets.compare_digest(base64.b85decode(stored_key_b85), candidate):
+        print("✅ Key verification successful")
+    else:
+        print("❌ Invalid key — password or salt does not match", file=sys.stderr)
+        sys.exit(1)
+
+
+# ── Password generation ───────────────────────────────────────────────────────
+def gen_random_password(length: int) -> str:
+    if length < MIN_PWD_LEN:
+        raise ValueError(f"Length must be ≥ {MIN_PWD_LEN}")
+    mandatory = [
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.digits),
+        secrets.choice(SYMBOLS),
+    ]
+    filler = [secrets.choice(ALL_CHARS) for _ in range(length - MIN_PWD_LEN)]
+    pool = mandatory + filler
+    secrets.SystemRandom().shuffle(pool)
+    return "".join(pool)
+
+
+# ── Clipboard ─────────────────────────────────────────────────────────────────
+def copy_to_clipboard(text: str) -> bool:
+    """
+    Copy text to clipboard using the best available tool.
+    Supports: xclip, xsel (X11), wl-copy (Wayland), pbcopy (macOS).
+    Returns True on success, False if no clipboard tool is found.
+    """
+    # Each entry: (command_to_pipe_into, [args])
+    candidates = [
+        ["wl-copy"],
+        ["xclip", "-selection", "clipboard"],
+        ["xsel",  "--clipboard", "--input"],
+        ["pbcopy"],
+    ]
+    for cmd in candidates:
+        try:
+            subprocess.run(
+                cmd,
+                input=text.encode(),
+                check=True,
+                stderr=subprocess.DEVNULL,
+            )
+            return True
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+    return False
+
+
+# ── Output handler ────────────────────────────────────────────────────────────
+def handle_output(content: str, label: str) -> None:
+    """
+    Ask the user what to do with the result:
+      [1] Print to terminal
+      [2] Copy to clipboard
+      [3] Save to file
+    """
+    print("\nWhat do you want to do with the result?")
+    print("  [1] Print to terminal")
+    print("  [2] Copy to clipboard")
+    print("  [3] Save to file")
+
+    while True:
+        choice = input("Choice [1/2/3]: ").strip()
+        if choice == "1":
+            print(f"{label}: {content}")
+            break
+        elif choice == "2":
+            if copy_to_clipboard(content):
+                print("✅ Copied to clipboard")
+            else:
+                print("❌ No clipboard tool found (install xclip, xsel, or wl-copy)", file=sys.stderr)
+                print("   Falling back to terminal output:")
+                print(f"{label}: {content}")
+            break
+        elif choice == "3":
+            save_to_file(content)
+            break
+        else:
+            print("Please enter 1, 2, or 3.")
+
+
+# ── Utility helpers ───────────────────────────────────────────────────────────
+def print_entropy(password: str) -> None:
+    pool = len(set(password))
+    if pool <= 1:
+        print("Estimated entropy: 0.00 bits")
+        return
+    print(f"Estimated entropy: {len(password) * math.log2(pool):.2f} bits")
+
+
+def save_to_file(content: str, default: str = DEFAULT_KEY_FILE) -> None:
+    raw  = input(f"Enter file name [default: {default}]: ").strip()
+    path = Path(raw) if raw else Path(default)
+    try:
+        path.write_text(content, encoding="utf-8")
+        print(f"✅ Saved to {path}")
+    except OSError as e:
+        print(f"❌ Failed to save: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def load_key_from_args(args: argparse.Namespace) -> str:
+    if args.path:
+        try:
+            return Path(args.path).read_text(encoding="utf-8").strip()
+        except OSError as e:
+            print(f"❌ Cannot read key file: {e}", file=sys.stderr)
+            sys.exit(1)
+    return args.key
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+def main() -> None:
+    args = parse_arguments()
+
+    if args.verify:
+        verify_key(
+            load_key_from_args(args),
+            args.length, args.time_cost, args.memory, args.parallelism,
+        )
+
+    elif args.derive:
+        key = derive_key(args.length, args.time_cost, args.memory, args.parallelism)
+        print_entropy(key)
+        handle_output(key, "Derived key (Base85)")
+
+    elif args.random:
+        pwd = gen_random_password(args.length)
+        print_entropy(pwd)
+        handle_output(pwd, "Random password")
+
+
+if __name__ == "__main__":
+    main()
