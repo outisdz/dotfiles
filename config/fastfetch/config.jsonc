@@ -35,7 +35,7 @@
       "type": "command",
       "key": "{#separator}{#keys} ",
       "keyColor": "blue",
-      "text": "splash=$(wisdom);echo $splash",
+      "text": "splash=$(ignite);echo $splash",
     },
 "break",
 	{
