@@ -68,6 +68,8 @@ transition: all 0.25s ease;
 #workspaces button:hover {
 background: @wb-hvr-bg;
 color: @wb-hvr-fg;
+padding-left: 6px;
+padding-right: 6px;
 }
 
 #workspaces button.active {
