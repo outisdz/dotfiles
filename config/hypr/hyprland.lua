@@ -32,6 +32,7 @@ local fileManager = "thunar"
 local menu        = "rofi -show drun"
 local browser = "librewolf"
 local brave_browser = "brave"
+local brave_browser_private = "brave --incognito"
 local code = "code"
 local elisa = "elisa"
 local vlc = "vlc"
@@ -321,6 +322,7 @@ hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(code))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(brave_browser))
+hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(brave_browser_private))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(elisa))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -display-columns 2 | cliphist decode | wl-copy"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(vlc))
