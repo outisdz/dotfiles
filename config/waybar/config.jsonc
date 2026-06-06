@@ -60,6 +60,13 @@
 	    "tooltip": false
     },
 
+    "custom/pacman": {
+    "format": "{} ",
+    "interval": "once",
+    "exec": "checkupdates | wc -l",
+    //"on-click": "",
+    "signal": 8
+},
    // Modules configuration
     "keyboard-state": {
         "numlock": true,
