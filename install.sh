@@ -115,43 +115,84 @@ else
     echo ""
 fi
 
-# Copy scripts to /usr/local/bin with proper permissions
-if [ -d "$SCRIPT_DIR/scripts" ]; then
-    script_count=$(find "$SCRIPT_DIR/scripts" -type f | wc -l)
-    if [ "$script_count" -gt 0 ]; then
-        print_info "Copying $script_count scripts to /usr/local/bin..."
-        for script in "$SCRIPT_DIR/scripts"/*; do
-            if [ -f "$script" ]; then
-                script_name=$(basename "$script")
-                if sudo cp "$script" /usr/local/bin/ 2>/dev/null; then
-                    if sudo chmod +x "/usr/local/bin/$script_name" 2>/dev/null; then
-                        print_status "Script installed: $script_name"
-                        ((INSTALL_SUCCESS++))
-                    else
-                        print_error "Failed to make $script_name executable"
-                        ((INSTALL_FAILED++))
-                    fi
-                else
-                    print_error "Failed to copy $script_name (requires sudo)"
-                    ((INSTALL_FAILED++))
-                fi
-            fi
-        done
-        echo ""
+# Install dependencies
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print_info "Dependency Installation"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+print_info "The following packages need to be installed:"
+echo "  • Official Repos: hyprland waybar rofi kitty mako hyprlock hypridle fastfetch fish hyprpaper sddm thunar"
+echo "  • AUR: wlogout"
+echo ""
+
+# Ask user if they want to install dependencies
+read -p "Do you want to install dependencies now? (y/n) " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    print_info "Starting dependency installation..."
+    echo ""
+    
+    # Install from official repos
+    print_info "Installing packages from official repositories..."
+    if sudo pacman -S --noconfirm hyprland waybar rofi kitty mako hyprlock hypridle fastfetch fish hyprpaper sddm thunar; then
+        print_status "Official packages installed successfully"
     else
-        print_info "Scripts directory is empty (optional)"
+        print_error "Failed to install some official packages"
+    fi
+    echo ""
+    
+    # Check if paru or yay is installed
+    if command -v paru &> /dev/null; then
+        print_info "Found paru, installing wlogout from AUR..."
+        if paru -S --noconfirm wlogout; then
+            print_status "wlogout installed successfully from AUR"
+        else
+            print_error "Failed to install wlogout from AUR"
+        fi
+    elif command -v yay &> /dev/null; then
+        print_info "Found yay, installing wlogout from AUR..."
+        if yay -S --noconfirm wlogout; then
+            print_status "wlogout installed successfully from AUR"
+        else
+            print_error "Failed to install wlogout from AUR"
+        fi
+    else
+        echo ""
+        print_error "Neither paru nor yay found. AUR helper is required to install wlogout."
+        echo ""
+        print_info "Install paru:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "  git clone https://aur.archlinux.org/paru.git"
+        echo "  cd paru"
+        echo "  makepkg -si"
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        print_info "After installing paru, run:"
+        echo "  paru -S wlogout"
         echo ""
     fi
 else
-    print_error "Scripts directory not found at $SCRIPT_DIR/scripts"
+    print_info "Skipping dependency installation."
+    echo ""
+    print_info "To install dependencies manually, run:"
+    echo "  sudo pacman -S hyprland waybar rofi kitty mako hyprlock hypridle fastfetch fish hyprpaper sddm thunar"
+    echo ""
+    print_info "For wlogout from AUR (requires paru or yay):"
+    echo "  paru -S wlogout"
+    echo "  # or"
+    echo "  yay -S wlogout"
     echo ""
 fi
 
 # Summary
+echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if [ "$INSTALL_FAILED" -eq 0 ]; then
-    print_status "Installation completed successfully!"
-    print_info "Configuration files have been installed to your home directory."
+    print_status "Configuration files installed successfully!"
+    print_info "Dotfiles have been copied to your home directory."
 else
     echo ""
     print_error "Installation completed with $INSTALL_FAILED error(s)"
@@ -160,7 +201,8 @@ fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 print_info "Next steps:"
-echo "  1. Start Hyprland: startx"
-echo "  2. Reload Fish shell configuration: source ~/.config/fish/config.fish"
-echo "  3. Customize Hyprland: ~/.config/hypr/hyprland.conf"
+echo "  1. Make sure all dependencies are installed"
+echo "  2. Start Hyprland: startx (or restart your session)"
+echo "  3. Reload Fish shell configuration: source ~/.config/fish/config.fish"
+echo "  4. Customize Hyprland: ~/.config/hypr/hyprland.conf"
 echo ""
