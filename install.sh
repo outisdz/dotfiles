@@ -120,6 +120,40 @@ else
     print_error "scripts directory not found"
 fi
 
+# Prompt to optionally install desktop packages
+echo ""
+DESKTOP_PKGS="hyprland waybar rofi kitty mako hyprlock hypridle fastfetch fish hyprpaper wlogout sddm thunar"
+while true; do
+    read -rp "$(echo -e "${YELLOW}Install desktop packages: ${DESKTOP_PKGS}? [Y/n]${NC}") " INSTALL_DESKTOP
+    INSTALL_DESKTOP=${INSTALL_DESKTOP:-Y}
+    case "$INSTALL_DESKTOP" in
+        [Yy]* )
+            print_info "Installing desktop packages..."
+            PKGS="$DESKTOP_PKGS"
+            if command -v apt-get >/dev/null 2>&1; then
+                print_info "Detected apt — installing packages"
+                sudo apt-get update && sudo apt-get install -y $PKGS || print_error "apt install failed"
+            elif command -v pacman >/dev/null 2>&1; then
+                print_info "Detected pacman — installing packages"
+                sudo pacman -Syu --noconfirm --needed $PKGS || print_error "pacman install failed"
+            elif command -v yay >/dev/null 2>&1; then
+                print_info "Detected yay — installing packages"
+                yay -S --noconfirm $PKGS || print_error "yay install failed"
+            else
+                print_error "No supported package manager found (apt, pacman, or yay). Skipping desktop package install."
+            fi
+            break
+            ;;
+        [Nn]* )
+            print_info "Skipping desktop package installation."
+            break
+            ;;
+        * )
+            echo "Please answer Y or n."
+            ;;
+    esac
+done
+
 echo ""
 print_status "Installation complete!"
 print_info "Configuration files are now in place."
