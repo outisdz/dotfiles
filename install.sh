@@ -4,6 +4,7 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Function to print status messages
@@ -19,142 +20,147 @@ print_info() {
     echo -e "${YELLOW}[•]${NC} $1"
 }
 
+print_debug() {
+    echo -e "${BLUE}[DEBUG]${NC} $1"
+}
+
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+print_info "Installation Script Directory: $SCRIPT_DIR"
+echo ""
+
 # Check if we're in the dotfiles directory
 if [ ! -d "$SCRIPT_DIR/config" ]; then
-    print_error "config directory not found. Please run this script from the dotfiles directory."
+    print_error "config directory not found at $SCRIPT_DIR/config"
+    print_error "Please run this script from the dotfiles directory."
     exit 1
 fi
 
 print_info "Starting dotfiles installation..."
+echo ""
 
-# Create necessary directories if they don't exist
+# Track installation status
+INSTALL_SUCCESS=0
+INSTALL_FAILED=0
+
+# Function to safe copy with error checking
+safe_copy() {
+    local source="$1"
+    local dest="$2"
+    local name="$3"
+    
+    if [ ! -d "$source" ]; then
+        print_error "$name directory not found: $source"
+        ((INSTALL_FAILED++))
+        return 1
+    fi
+    
+    # Count files in source
+    local file_count=$(find "$source" -type f | wc -l)
+    if [ "$file_count" -eq 0 ]; then
+        print_error "$name directory is empty: $source"
+        ((INSTALL_FAILED++))
+        return 1
+    fi
+    
+    # Create destination if it doesn't exist
+    mkdir -p "$dest" || { print_error "Failed to create $dest"; ((INSTALL_FAILED++)); return 1; }
+    
+    # Copy files
+    print_info "Copying $name ($file_count files)..."
+    if cp -rv "$source"/* "$dest/" > /dev/null 2>&1; then
+        print_status "$name copied to $dest"
+        ((INSTALL_SUCCESS++))
+        return 0
+    else
+        print_error "Failed to copy $name from $source to $dest"
+        ((INSTALL_FAILED++))
+        return 1
+    fi
+}
+
+# Create necessary home directories
+print_info "Creating user directories..."
 mkdir -p ~/.config
 mkdir -p ~/.themes
 mkdir -p ~/.icons
 mkdir -p ~/wallpapers
 mkdir -p ~/.images
+print_status "User directories created/verified"
+echo ""
 
 # Copy config files
-if [ -d "$SCRIPT_DIR/config" ]; then
-    print_info "Copying config files..."
-    cp -r "$SCRIPT_DIR/config"/* ~/.config/ 2>/dev/null
-    if [ $? -eq 0 ]; then
-        print_status "Config files copied to ~/.config/"
-    else
-        print_error "Failed to copy config files"
-    fi
-else
-    print_error "config directory not found"
-fi
+safe_copy "$SCRIPT_DIR/config" "$HOME/.config" "Config files"
+echo ""
 
 # Copy themes
-if [ -d "$SCRIPT_DIR/themes" ]; then
-    print_info "Copying themes..."
-    cp -r "$SCRIPT_DIR/themes"/* ~/.themes/ 2>/dev/null
-    if [ $? -eq 0 ]; then
-        print_status "Themes copied to ~/.themes/"
-    else
-        print_error "Failed to copy themes"
-    fi
-else
-    print_error "themes directory not found"
-fi
+safe_copy "$SCRIPT_DIR/themes" "$HOME/.themes" "Themes"
+echo ""
 
 # Copy icons
-if [ -d "$SCRIPT_DIR/icons" ]; then
-    print_info "Copying icons..."
-    cp -r "$SCRIPT_DIR/icons"/* ~/.icons/ 2>/dev/null
-    if [ $? -eq 0 ]; then
-        print_status "Icons copied to ~/.icons/"
-    else
-        print_error "Failed to copy icons"
-    fi
-else
-    print_error "icons directory not found"
-fi
+safe_copy "$SCRIPT_DIR/icons" "$HOME/.icons" "Icons"
+echo ""
 
 # Copy wallpapers
-if [ -d "$SCRIPT_DIR/wallpapers" ]; then
-    print_info "Copying wallpapers..."
-    cp -r "$SCRIPT_DIR/wallpapers"/* ~/wallpapers/ 2>/dev/null
-    if [ $? -eq 0 ]; then
-        print_status "Wallpapers copied to ~/wallpapers/"
-    else
-        print_error "Failed to copy wallpapers"
-    fi
-else
-    print_error "wallpapers directory not found"
-fi
+safe_copy "$SCRIPT_DIR/wallpapers" "$HOME/wallpapers" "Wallpapers"
+echo ""
 
-# Copy images
-if [ -d "$SCRIPT_DIR/images" ]; then
-    print_info "Copying images..."
-    cp -r "$SCRIPT_DIR/images"/* ~/.images/ 2>/dev/null
-    if [ $? -eq 0 ]; then
-        print_status "Images copied to ~/.images/"
-    else
-        print_error "Failed to copy images"
-    fi
+# Copy images (optional)
+if [ -d "$SCRIPT_DIR/images" ] && [ "$(find "$SCRIPT_DIR/images" -type f | wc -l)" -gt 0 ]; then
+    safe_copy "$SCRIPT_DIR/images" "$HOME/.images" "Images"
+    echo ""
 else
-    print_error "images directory not found (optional)"
+    print_info "Images directory is empty or not found (optional)"
+    echo ""
 fi
 
 # Copy scripts to /usr/local/bin with proper permissions
 if [ -d "$SCRIPT_DIR/scripts" ]; then
-    print_info "Copying scripts to /usr/local/bin..."
-    for script in "$SCRIPT_DIR/scripts"/*; do
-        if [ -f "$script" ]; then
-            sudo cp "$script" /usr/local/bin/ 2>/dev/null
-            sudo chmod +x /usr/local/bin/$(basename "$script")
-        fi
-    done
-    if [ $? -eq 0 ]; then
-        print_status "Scripts copied and made executable in /usr/local/bin/"
+    script_count=$(find "$SCRIPT_DIR/scripts" -type f | wc -l)
+    if [ "$script_count" -gt 0 ]; then
+        print_info "Copying $script_count scripts to /usr/local/bin..."
+        for script in "$SCRIPT_DIR/scripts"/*; do
+            if [ -f "$script" ]; then
+                script_name=$(basename "$script")
+                if sudo cp "$script" /usr/local/bin/ 2>/dev/null; then
+                    if sudo chmod +x "/usr/local/bin/$script_name" 2>/dev/null; then
+                        print_status "Script installed: $script_name"
+                        ((INSTALL_SUCCESS++))
+                    else
+                        print_error "Failed to make $script_name executable"
+                        ((INSTALL_FAILED++))
+                    fi
+                else
+                    print_error "Failed to copy $script_name (requires sudo)"
+                    ((INSTALL_FAILED++))
+                fi
+            fi
+        done
+        echo ""
     else
-        print_error "Failed to copy scripts (requires sudo)"
+        print_info "Scripts directory is empty (optional)"
+        echo ""
     fi
 else
-    print_error "scripts directory not found"
+    print_error "Scripts directory not found at $SCRIPT_DIR/scripts"
+    echo ""
 fi
 
-# Prompt to optionally install desktop packages
+# Summary
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ "$INSTALL_FAILED" -eq 0 ]; then
+    print_status "Installation completed successfully!"
+    print_info "Configuration files have been installed to your home directory."
+else
+    echo ""
+    print_error "Installation completed with $INSTALL_FAILED error(s)"
+    print_info "Please check the errors above and run the script again if needed."
+fi
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-DESKTOP_PKGS="hyprland waybar rofi kitty mako hyprlock hypridle fastfetch fish hyprpaper wlogout sddm thunar"
-while true; do
-    read -rp "$(echo -e "${YELLOW}Install desktop packages: ${DESKTOP_PKGS}? [Y/n]${NC}") " INSTALL_DESKTOP
-    INSTALL_DESKTOP=${INSTALL_DESKTOP:-Y}
-    case "$INSTALL_DESKTOP" in
-        [Yy]* )
-            print_info "Installing desktop packages..."
-            PKGS="$DESKTOP_PKGS"
-            if command -v apt-get >/dev/null 2>&1; then
-                print_info "Detected apt — installing packages"
-                sudo apt-get update && sudo apt-get install -y $PKGS || print_error "apt install failed"
-            elif command -v pacman >/dev/null 2>&1; then
-                print_info "Detected pacman — installing packages"
-                sudo pacman -Syu --noconfirm --needed $PKGS || print_error "pacman install failed"
-            elif command -v yay >/dev/null 2>&1; then
-                print_info "Detected yay — installing packages"
-                yay -S --noconfirm $PKGS || print_error "yay install failed"
-            else
-                print_error "No supported package manager found (apt, pacman, or yay). Skipping desktop package install."
-            fi
-            break
-            ;;
-        [Nn]* )
-            print_info "Skipping desktop package installation."
-            break
-            ;;
-        * )
-            echo "Please answer Y or n."
-            ;;
-    esac
-done
-
+print_info "Next steps:"
+echo "  1. Start Hyprland: startx"
+echo "  2. Reload Fish shell configuration: source ~/.config/fish/config.fish"
+echo "  3. Customize Hyprland: ~/.config/hypr/hyprland.conf"
 echo ""
-print_status "Installation complete!"
-print_info "Configuration files are now in place."
-print_info "You may need to restart your session or reload configurations."
