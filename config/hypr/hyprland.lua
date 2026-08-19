@@ -33,6 +33,7 @@ local menu        = "rofi -show drun"
 local browser = "librewolf"
 local brave_browser = "brave"
 local brave_browser_private = "brave --incognito"
+local brave_browser_private_tor = "brave --tor"
 local code = "code"
 local elisa = "elisa"
 local vlc = "vlc"
@@ -64,13 +65,13 @@ hl.on("hyprland.start", function ()
         hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
         hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
         hl.exec_cmd("systemctl --user start hyprpolkitagent")
-
+	hl.exec_cmd("./.config/hypr/wallpapers.sh && hyprpaper")
 -- notification daemon
         hl.exec_cmd("mako") --config=$HOME/.config/mako/config")
 
 -- other apps
+        --hl.exec_cmd("hyprpaper")
         hl.exec_cmd("waybar")
-        hl.exec_cmd("hyprpaper")
 	hl.exec_cmd("udiskie --no-automount --smart-tray")
 
 	hl.exec_cmd("/usr/lib/gvfs/gvfsd")
@@ -323,13 +324,16 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(code))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(brave_browser))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(brave_browser_private))
+hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd(brave_browser_private_tor))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(elisa))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -display-columns 2 | cliphist decode | wl-copy"))
+hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("cliphist wipe"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(vlc))
 hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(rofi_window))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(hyprlock))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nm-applet"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd(note))
+hl.bind("ALT + W", hl.dsp.exec_cmd("wallpaper"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
@@ -437,7 +441,7 @@ hl.window_rule({
 hl.window_rule({
     name = "LibreWolf",
     match = {class = "librewolf",
-	     title = "^(About LibreWolf|Library)",},
+	     title = "^(About LibreWolf|Library|LibreWolf - Choose a profile)",},
     float = true,
 })
 
@@ -458,6 +462,17 @@ hl.window_rule({
 
 hl.window_rule({
     name = "Floating Apps",
-    match = {class = "^(io.gitlab.metadatacleaner.metadatacleaner|virt-manager)"},
+    match = {class = "^(io.gitlab.metadatacleaner.metadatacleaner|virt-manager|signal|org.keepassxc.KeePassXC|org.gnome.Weather)"},
+    float = true,
+})
+hl.window_rule({
+    name = "Tor",
+    match = {class = "Tor Browser",
+             title = ".* Tor Browser",},
+    float = true,
+})
+hl.window_rule({
+    name = "Brave",
+    match = {class = "brave",title = ".* wants to open",},
     float = true,
 })

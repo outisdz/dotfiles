@@ -21,3 +21,6 @@ if not contains "$HOME/.cargo/bin" $PATH
     set -x PATH "$HOME/.cargo/bin" $PATH
 end
 
+# fish — add to ~/.config/fish/config.fish
+set -gx ARCH_UPDATE_VENV $HOME/pvenv/
+set -gx ARCH_UPDATE_ICON $HOME/.config/icons/archlinux.png
